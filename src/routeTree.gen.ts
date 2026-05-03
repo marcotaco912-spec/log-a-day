@@ -10,24 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as NewRouteImport } from './routes/new'
+import { Route as AllRouteImport } from './routes/all'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EntryDateRouteImport } from './routes/entry.$date'
+import { Route as EditIdRouteImport } from './routes/edit.$id'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
+const NewRoute = NewRouteImport.update({
+  id: '/new',
+  path: '/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CalendarRoute = CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
+const AllRoute = AllRouteImport.update({
+  id: '/all',
+  path: '/all',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,48 +35,48 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EntryDateRoute = EntryDateRouteImport.update({
-  id: '/entry/$date',
-  path: '/entry/$date',
+const EditIdRoute = EditIdRouteImport.update({
+  id: '/edit/$id',
+  path: '/edit/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/search': typeof SearchRoute
+  '/all': typeof AllRoute
+  '/new': typeof NewRoute
   '/settings': typeof SettingsRoute
-  '/entry/$date': typeof EntryDateRoute
+  '/edit/$id': typeof EditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/search': typeof SearchRoute
+  '/all': typeof AllRoute
+  '/new': typeof NewRoute
   '/settings': typeof SettingsRoute
-  '/entry/$date': typeof EntryDateRoute
+  '/edit/$id': typeof EditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/calendar': typeof CalendarRoute
-  '/search': typeof SearchRoute
+  '/all': typeof AllRoute
+  '/new': typeof NewRoute
   '/settings': typeof SettingsRoute
-  '/entry/$date': typeof EntryDateRoute
+  '/edit/$id': typeof EditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/calendar' | '/search' | '/settings' | '/entry/$date'
+  fullPaths: '/' | '/all' | '/new' | '/settings' | '/edit/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calendar' | '/search' | '/settings' | '/entry/$date'
-  id: '__root__' | '/' | '/calendar' | '/search' | '/settings' | '/entry/$date'
+  to: '/' | '/all' | '/new' | '/settings' | '/edit/$id'
+  id: '__root__' | '/' | '/all' | '/new' | '/settings' | '/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CalendarRoute: typeof CalendarRoute
-  SearchRoute: typeof SearchRoute
+  AllRoute: typeof AllRoute
+  NewRoute: typeof NewRoute
   SettingsRoute: typeof SettingsRoute
-  EntryDateRoute: typeof EntryDateRoute
+  EditIdRoute: typeof EditIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -88,18 +88,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
+    '/new': {
+      id: '/new'
+      path: '/new'
+      fullPath: '/new'
+      preLoaderRoute: typeof NewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarRouteImport
+    '/all': {
+      id: '/all'
+      path: '/all'
+      fullPath: '/all'
+      preLoaderRoute: typeof AllRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -109,11 +109,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/entry/$date': {
-      id: '/entry/$date'
-      path: '/entry/$date'
-      fullPath: '/entry/$date'
-      preLoaderRoute: typeof EntryDateRouteImport
+    '/edit/$id': {
+      id: '/edit/$id'
+      path: '/edit/$id'
+      fullPath: '/edit/$id'
+      preLoaderRoute: typeof EditIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -121,20 +121,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CalendarRoute: CalendarRoute,
-  SearchRoute: SearchRoute,
+  AllRoute: AllRoute,
+  NewRoute: NewRoute,
   SettingsRoute: SettingsRoute,
-  EntryDateRoute: EntryDateRoute,
+  EditIdRoute: EditIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

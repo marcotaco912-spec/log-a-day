@@ -1,238 +1,141 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSettings } from "@/lib/store";
-import { STORAGE_KEY } from "@/lib/journal";
-import type { JournalEntry } from "@/lib/journal";
-import { formatLongDate, moodOf } from "@/lib/journal";
-import { Bell, Lock, Moon, FileText, FileDown } from "lucide-react";
+import { useMemo } from "react";
+import { Bell, Download, Moon, Trash2, Volume2 } from "lucide-react";
+import { useAppSettings, useReminders, deleteReminderById } from "@/lib/store";
+import { formatTime12 } from "@/lib/types";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Daylog" },
-      { name: "description", content: "Customize Daylog: reminders, app lock, dark mode, and exports." },
+      { title: "Settings — RemindMe" },
+      { name: "description", content: "Configure default time, alarm sound, snooze, and theme." },
     ],
   }),
   component: SettingsPage,
 });
 
 function SettingsPage() {
-  const [settings, setSettings] = useSettings();
+  const [s, setS] = useAppSettings();
+  const reminders = useReminders();
+  const completedCount = useMemo(() => reminders.filter((r) => r.completed).length, [reminders]);
 
-  const exportText = () => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? (JSON.parse(raw) as Record<string, JournalEntry>) : {};
-    const entries = Object.values(data).sort((a, b) => (a.date < b.date ? -1 : 1));
-    let out = "Daylog — Journal Export\n\n";
-    for (const e of entries) {
-      const m = moodOf(e.mood);
-      out += `${formatLongDate(e.date)}\n`;
-      if (m) out += `Mood: ${m.emoji} ${m.label}\n`;
-      if (e.tags.length) out += `Tags: ${e.tags.map((t) => "#" + t).join(" ")}\n`;
-      out += `\n${e.text || "(no text)"}\n`;
-      if (e.links.length) {
-        out += `\nLinks:\n` + e.links.map((l) => `  • ${l.label ?? l.url} — ${l.url}`).join("\n") + "\n";
-      }
-      out += `\n${"─".repeat(40)}\n\n`;
-    }
-    download(out, "daylog-export.txt", "text/plain");
+  const exportCsv = () => {
+    const rows = [
+      ["id", "title", "date", "time", "category", "priority", "completed", "notes"],
+      ...reminders.map((r) => [r.id, r.title, r.date, r.time, r.category, r.priority, String(r.completed), r.notes.replace(/\n/g, " ")]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "remindme-export.csv"; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const exportPdf = () => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const data = raw ? (JSON.parse(raw) as Record<string, JournalEntry>) : {};
-    const entries = Object.values(data).sort((a, b) => (a.date < b.date ? -1 : 1));
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Daylog Export</title>
-<style>
-  body{font-family:-apple-system,Inter,system-ui,sans-serif;color:#1a1a2e;max-width:680px;margin:40px auto;padding:0 24px;line-height:1.55}
-  h1{font-size:32px;margin:0 0 8px}
-  .sub{color:#666;margin-bottom:32px}
-  article{padding:24px 0;border-top:1px solid #eee}
-  h2{font-size:18px;margin:0 0 6px}
-  .meta{font-size:12px;color:#6C63FF;margin-bottom:8px}
-  .text{white-space:pre-wrap}
-  .tag{display:inline-block;background:#eee;color:#333;padding:2px 8px;border-radius:999px;font-size:11px;margin-right:4px}
-  ul{padding-left:18px;font-size:13px}
-  @media print{ article{page-break-inside:avoid} }
-</style></head><body>
-<h1>Daylog Journal</h1>
-<p class="sub">${entries.length} ${entries.length === 1 ? "entry" : "entries"} · exported ${new Date().toLocaleDateString()}</p>
-${entries.map((e) => {
-  const m = moodOf(e.mood);
-  return `<article>
-    <div class="meta">${formatLongDate(e.date)}${m ? ` · ${m.emoji} ${m.label}` : ""}</div>
-    <div class="text">${escape(e.text || "(no text)")}</div>
-    ${e.tags.length ? `<p>${e.tags.map((t) => `<span class="tag">#${escape(t)}</span>`).join("")}</p>` : ""}
-    ${e.links.length ? `<ul>${e.links.map((l) => `<li><a href="${escape(l.url)}">${escape(l.label ?? l.url)}</a></li>`).join("")}</ul>` : ""}
-  </article>`;
-}).join("")}
-<script>window.onload=()=>setTimeout(()=>window.print(),300)</script>
-</body></html>`;
+    // Print-friendly: open a window with HTML and trigger print
     const w = window.open("", "_blank");
-    if (w) {
-      w.document.write(html);
-      w.document.close();
+    if (!w) return;
+    w.document.write(`<!doctype html><html><head><title>RemindMe export</title>
+      <style>body{font-family:Inter,sans-serif;padding:24px;color:#111}h1{font-size:20px;margin:0 0 16px}
+      .r{border-bottom:1px solid #eee;padding:10px 0}.t{font-weight:600}.m{color:#666;font-size:12px}</style></head><body>
+      <h1>RemindMe — ${reminders.length} reminders</h1>
+      ${reminders.map((r) => `<div class="r"><div class="t">${escapeHtml(r.title)}</div><div class="m">${r.date} ${r.allDay ? "(all day)" : r.time} · ${r.category} · ${r.priority}${r.completed ? " · DONE" : ""}</div>${r.notes ? `<div>${escapeHtml(r.notes)}</div>` : ""}</div>`).join("")}
+      </body></html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 300);
+  };
+
+  const clearCompleted = async () => {
+    if (!confirm(`Delete ${completedCount} completed reminders?`)) return;
+    for (const r of reminders.filter((x) => x.completed)) {
+      await deleteReminderById(r.id);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <header className="pt-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-          Settings
-        </p>
-        <h1 className="mt-1 text-[28px] font-semibold tracking-tight">Preferences</h1>
+    <div className="space-y-5">
+      <header>
+        <h1 className="text-2xl font-bold">Settings</h1>
       </header>
 
-      <section className="overflow-hidden rounded-2xl bg-card shadow-card">
-        <Row
-          icon={<Bell className="h-4 w-4" />}
-          title="Daily reminder"
-          description="Get a nudge to log your day."
-        >
-          <Toggle
-            checked={settings.reminder}
-            onChange={(v) => setSettings({ reminder: v })}
+      <section className="space-y-1 rounded-2xl border border-border bg-card shadow-card">
+        <Row icon={<Bell className="h-5 w-5" />} label="Default reminder time" value={formatTime12(s.defaultTime)}>
+          <input
+            type="time"
+            value={s.defaultTime}
+            onChange={(e) => setS({ defaultTime: e.target.value })}
+            className="rounded-lg border border-border bg-background px-2 py-1 text-sm"
           />
         </Row>
-        {settings.reminder && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3">
-            <span className="text-sm text-muted-foreground">Reminder time</span>
-            <input
-              type="time"
-              value={settings.reminderTime}
-              onChange={(e) => setSettings({ reminderTime: e.target.value })}
-              className="rounded-lg bg-muted px-3 py-1.5 text-sm outline-none"
-            />
-          </div>
-        )}
-        <Divider />
-        <Row
-          icon={<Lock className="h-4 w-4" />}
-          title="App lock"
-          description="Require Face ID or passcode."
-        >
-          <Toggle
-            checked={settings.appLock}
-            onChange={(v) => setSettings({ appLock: v })}
-          />
+        <Row icon={<Volume2 className="h-5 w-5" />} label="Alarm sound" value={s.alarmSound ? "On" : "Off"}>
+          <Toggle checked={s.alarmSound} onChange={(v) => setS({ alarmSound: v })} />
         </Row>
-        <Divider />
-        <Row
-          icon={<Moon className="h-4 w-4" />}
-          title="Dark mode"
-          description="Easier on the eyes at night."
-        >
-          <Toggle
-            checked={settings.darkMode}
-            onChange={(v) => setSettings({ darkMode: v })}
-          />
+        <Row icon={<Bell className="h-5 w-5" />} label="Snooze duration" value={`${s.snoozeMinutes} min`}>
+          <select
+            value={s.snoozeMinutes}
+            onChange={(e) => setS({ snoozeMinutes: Number(e.target.value) as 5 | 10 | 30 | 60 })}
+            className="rounded-lg border border-border bg-background px-2 py-1 text-sm"
+          >
+            <option value={5}>5 min</option>
+            <option value={10}>10 min</option>
+            <option value={30}>30 min</option>
+            <option value={60}>1 hour</option>
+          </select>
+        </Row>
+        <Row icon={<Moon className="h-5 w-5" />} label="Dark mode" value={s.darkMode ? "On" : "Off"}>
+          <Toggle checked={s.darkMode} onChange={(v) => setS({ darkMode: v })} />
         </Row>
       </section>
 
-      <section>
-        <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Export
-        </h2>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={exportPdf}
-            className="flex flex-col items-start gap-2 rounded-2xl bg-card p-4 text-left shadow-card active:scale-[0.98] transition-transform"
-          >
-            <FileDown className="h-5 w-5 text-primary" />
-            <div>
-              <p className="text-sm font-semibold">Export as PDF</p>
-              <p className="text-[11px] text-muted-foreground">Print-ready</p>
-            </div>
-          </button>
-          <button
-            onClick={exportText}
-            className="flex flex-col items-start gap-2 rounded-2xl bg-card p-4 text-left shadow-card active:scale-[0.98] transition-transform"
-          >
-            <FileText className="h-5 w-5 text-primary" />
-            <div>
-              <p className="text-sm font-semibold">Export as Text</p>
-              <p className="text-[11px] text-muted-foreground">Plain .txt</p>
-            </div>
-          </button>
-        </div>
+      <section className="space-y-2">
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</h2>
+        <button onClick={exportPdf} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left shadow-card">
+          <Download className="h-5 w-5 text-primary" />
+          <span className="flex-1 text-sm font-medium">Export as PDF</span>
+        </button>
+        <button onClick={exportCsv} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left shadow-card">
+          <Download className="h-5 w-5 text-primary" />
+          <span className="flex-1 text-sm font-medium">Export as CSV</span>
+        </button>
+        <button onClick={clearCompleted} disabled={completedCount === 0} className="flex w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-left shadow-card disabled:opacity-50">
+          <Trash2 className="h-5 w-5 text-destructive" />
+          <span className="flex-1 text-sm font-medium text-destructive">Clear completed ({completedCount})</span>
+        </button>
       </section>
 
-      <section>
-        <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          About
-        </h2>
-        <div className="rounded-2xl bg-card p-4 shadow-card">
-          <p className="text-sm font-semibold">Daylog</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Version 1.0.0</p>
-          <p className="mt-3 text-xs text-muted-foreground">
-            A quiet space for daily reflection. Your entries live on this device.
-          </p>
-        </div>
-      </section>
+      <p className="px-2 pt-4 text-center text-xs text-muted-foreground">
+        RemindMe · Install to your home screen for the best experience
+      </p>
     </div>
   );
 }
 
-function Row({
-  icon,
-  title,
-  description,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  children?: React.ReactNode;
-}) {
+function Row({ icon, label, value, children }: { icon: React.ReactNode; label: string; value?: string; children?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-primary-soft text-primary">
-        {icon}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-[11px] text-muted-foreground">{description}</p>
+    <div className="flex items-center gap-3 px-4 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border">
+      <span className="text-muted-foreground">{icon}</span>
+      <div className="flex-1">
+        <div className="text-sm font-medium">{label}</div>
+        {value && <div className="text-xs text-muted-foreground">{value}</div>}
       </div>
       {children}
     </div>
   );
 }
 
-function Divider() {
-  return <div className="border-t border-border" />;
-}
-
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
-      role="switch"
-      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={[
-        "relative h-7 w-12 flex-none rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-muted",
-      ].join(" ")}
+      className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-primary" : "bg-muted"}`}
+      aria-pressed={checked}
     >
-      <span
-        className={[
-          "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-card transition-all",
-          checked ? "left-[22px]" : "left-0.5",
-        ].join(" ")}
-      />
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
     </button>
   );
 }
 
-function escape(s: string) {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
-
-function download(content: string, filename: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }

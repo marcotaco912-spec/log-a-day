@@ -1,44 +1,33 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, CalendarDays, Search, Settings as SettingsIcon } from "lucide-react";
+import { CalendarDays, ListTodo, Settings as SettingsIcon } from "lucide-react";
 
 const tabs = [
-  { to: "/", label: "Today", icon: Home, exact: true },
-  { to: "/calendar", label: "Calendar", icon: CalendarDays, exact: false },
-  { to: "/search", label: "Search", icon: Search, exact: false },
+  { to: "/", label: "Today", icon: CalendarDays, exact: true },
+  { to: "/all", label: "All", icon: ListTodo, exact: false },
   { to: "/settings", label: "Settings", icon: SettingsIcon, exact: false },
 ] as const;
 
 export function BottomNav() {
-  const { pathname } = useLocation();
+  const loc = useLocation();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/85 backdrop-blur-xl">
-      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
-        {tabs.map(({ to, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === to : pathname.startsWith(to);
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 backdrop-blur-lg safe-bottom"
+      aria-label="Primary"
+    >
+      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-2 pb-2">
+        {tabs.map((t) => {
+          const active = t.exact ? loc.pathname === t.to : loc.pathname.startsWith(t.to);
+          const Icon = t.icon;
           return (
-            <li key={to} className="flex-1">
+            <li key={t.to} className="flex-1">
               <Link
-                to={to}
-                className="group flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 transition-colors"
+                to={t.to}
+                className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs font-medium transition-colors ${
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                <span
-                  className={[
-                    "flex h-8 w-12 items-center justify-center rounded-full transition-all",
-                    active
-                      ? "bg-primary-soft text-primary"
-                      : "text-muted-foreground group-hover:text-foreground",
-                  ].join(" ")}
-                >
-                  <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
-                </span>
-                <span
-                  className={[
-                    "text-[10px] font-medium tracking-wide transition-colors",
-                    active ? "text-primary" : "text-muted-foreground",
-                  ].join(" ")}
-                >
-                  {label}
-                </span>
+                <Icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition-transform`} />
+                {t.label}
               </Link>
             </li>
           );
