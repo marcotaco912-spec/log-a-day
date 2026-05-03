@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ReminderCard } from "@/components/ReminderCard";
 import { SwipeRow } from "@/components/SwipeRow";
 import { FAB } from "@/components/FAB";
@@ -21,7 +21,12 @@ function TodayPage() {
   const reminders = useReminders();
   const [settings] = useAppSettings();
   const nav = useNavigate();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const groups = useMemo(() => classifyReminders(reminders), [reminders]);
+  if (!mounted) {
+    return <div className="space-y-3"><div className="h-8 w-32 animate-pulse rounded-lg bg-muted" /><div className="h-10 w-64 animate-pulse rounded-lg bg-muted" /></div>;
+  }
 
   const summary = `${groups.dueToday.length} due today · ${groups.overdue.length} overdue · ${groups.upcoming.length} upcoming`;
 
