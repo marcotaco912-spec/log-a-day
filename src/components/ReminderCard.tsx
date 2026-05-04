@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Link as LinkIcon, Repeat } from "lucide-react";
+import { Image as ImageIcon, Link as LinkIcon, Repeat, Mail } from "lucide-react";
 import type { Reminder } from "@/lib/types";
 import { CATEGORIES, PRIORITIES, formatTime12, reminderTimestamp } from "@/lib/types";
 
@@ -55,6 +55,11 @@ export function ReminderCard({ reminder: r, onClick, variant = "default" }: Prop
           {r.links.length > 0 && (
             <span className="inline-flex items-center gap-1">
               <LinkIcon className="h-3 w-3" /> {r.links.length}
+            </span>
+          )}
+          {r.email && (
+            <span className="inline-flex items-center gap-1">
+              <Mail className="h-3 w-3" />
             </span>
           )}
         </div>
