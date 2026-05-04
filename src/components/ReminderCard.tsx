@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Link as LinkIcon, Repeat } from "lucide-react";
+import { Image as ImageIcon, Link as LinkIcon, Repeat, Mail } from "lucide-react";
 import type { Reminder } from "@/lib/types";
 import { CATEGORIES, PRIORITIES, formatTime12, reminderTimestamp } from "@/lib/types";
 
