@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Camera, Link2, Trash2, Plus, X } from "lucide-react";
+import { ChevronLeft, Camera, Link2, Trash2, Plus, X, Mail } from "lucide-react";
 import type { Reminder, Category, Priority, RepeatMode, ReminderLink } from "@/lib/types";
 import { CATEGORIES, PRIORITIES, newId, formatTime12 } from "@/lib/types";
 import { useAppSettings, saveReminder, deleteReminderById } from "@/lib/store";
