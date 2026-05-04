@@ -22,6 +22,7 @@ export type Reminder = {
   category: Category;
   photos: string[]; // base64 data urls
   links: ReminderLink[];
+  email?: string; // optional email address to contact
   completed: boolean;
   createdAt: number;
   snoozedUntil?: number | null;
