@@ -57,6 +57,11 @@ export function ReminderCard({ reminder: r, onClick, variant = "default" }: Prop
               <LinkIcon className="h-3 w-3" /> {r.links.length}
             </span>
           )}
+          {r.email && (
+            <span className="inline-flex items-center gap-1">
+              <Mail className="h-3 w-3" />
+            </span>
+          )}
         </div>
         {r.notes && (
           <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{r.notes}</p>
