@@ -253,31 +253,33 @@ export function ReminderEditor({ existing }: Props) {
         />
       </section>
 
-      {/* Email */}
+      {/* Email link */}
       <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
-        <h2 className="pb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Email</h2>
+        <h2 className="pb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Email link</h2>
         <div className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2">
           <Mail className="h-4 w-4 text-muted-foreground" />
           <input
-            type="email"
-            inputMode="email"
+            type="url"
+            inputMode="url"
             autoCapitalize="off"
             autoCorrect="off"
             value={r.email ?? ""}
             onChange={(e) => setR((p) => ({ ...p, email: e.target.value }))}
-            placeholder="name@example.com"
+            placeholder="Paste email link (Gmail, Outlook…)"
             className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground/60 focus:outline-none"
           />
           {r.email && (
             <a
-              href={`mailto:${r.email}?subject=${encodeURIComponent(r.title || "Reminder")}${r.notes ? `&body=${encodeURIComponent(r.notes)}` : ""}`}
+              href={r.email}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
             >
               Open
             </a>
           )}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">Tap Open to compose an email in your mail app.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Paste a direct link to an existing email and tap Open to view it.</p>
       </section>
 
       {/* Photos */}
