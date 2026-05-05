@@ -74,6 +74,29 @@ function SettingsPage() {
         <h1 className="text-2xl font-bold">Settings</h1>
       </header>
 
+      <section className="space-y-2">
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</h2>
+        {email ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+              {email[0]?.toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium">Signed in with Google</div>
+              <div className="truncate text-xs text-muted-foreground">{email}</div>
+            </div>
+            <button onClick={signOut} className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium">
+              <LogOut className="h-3.5 w-3.5" /> Sign out
+            </button>
+          </div>
+        ) : (
+          <Link to="/login" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
+            <LogIn className="h-5 w-5 text-primary" />
+            <span className="flex-1 text-sm font-medium">Sign in with Google</span>
+          </Link>
+        )}
+      </section>
+
       <section className="space-y-1 rounded-2xl border border-border bg-card shadow-card">
         <Row icon={<Bell className="h-5 w-5" />} label="Default reminder time" value={formatTime12(s.defaultTime)}>
           <input
