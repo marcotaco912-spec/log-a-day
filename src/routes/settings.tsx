@@ -19,6 +19,20 @@ function SettingsPage() {
   const [s, setS] = useAppSettings();
   const reminders = useReminders();
   const completedCount = useMemo(() => reminders.filter((r) => r.completed).length, [reminders]);
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) =>
+      setEmail(session?.user.email ?? null),
+    );
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setEmail(null);
+  };
 
   const exportCsv = () => {
     const rows = [
