@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { Bell, Download, Moon, Trash2, Volume2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, Download, LogIn, LogOut, Moon, Trash2, Volume2 } from "lucide-react";
 import { useAppSettings, useReminders, deleteReminderById } from "@/lib/store";
 import { formatTime12 } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
